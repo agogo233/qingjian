@@ -1,0 +1,81 @@
+# push 到 main 时构建 Windows 安装程序（Inno Setup）并作为 Actions artifact 上传，供直接下载安装。
+# 复用 apps/windows/installer/build.ps1（含 cargo 六产物、自包含运行时、ONNX、缺件校验、iscc），不内联打包逻辑。
+# 与 release.yml 的 windows job 同款：QINGJIAN_UIACCESS=0（无签名证书，Server 不嵌 uiAccess）、
+# 钉死 Inno Setup 7.1.0 与 SHA-256、数据按 data.lock 拉取。
+# actions 一律钉到 commit（注释里是对应标签），Dependabot 每周提 PR 更新。
+name: win-build
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  actions: write # concurrency 取消进行中运行与 upload-artifact 上传都需要
+
+concurrency:
+  group: win-build-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  windows-build:
+    runs-on: windows-latest
+    # 冷缓存：6 个 release 产物 + i686 + 数据/ONNX/NuGet 运行时下载 + 实心 LZMA 压缩（约百 MB 数据）
+    timeout-minutes: 120
+    defaults:
+      run:
+        shell: pwsh
+    env:
+      # 没有代码签名证书：Server 不带 uiAccess（没签名的 exe 带 uiAccess=true 起不来），与 release.yml 一致
+      QINGJIAN_UIACCESS: '0'
+      PYTHON: python
+      # Windows 上 Python 的标准输出缺省 cp1252，中文更新日志会编码失败。
+      PYTHONUTF8: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # v1
+        with:
+          toolchain: 1.96.0
+          # 安装包另带一份 32 位 TSF DLL（build.ps1 编；32 位应用只能加载它）
+          targets: i686-pc-windows-msvc
+
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+
+      # 产品数据按 tools/release/data.lock 钉住版本下载并校验；build.ps1 会在其后再生成越南语词表
+      - name: Fetch product data
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: tools/release/data-fetch.sh
+
+      # 与开发机同版本（7.1.0，自带简体中文翻译；Chocolatey 只有 6.x，6 的安装包不带简中）。钉死 GitHub Release 上的文件。
+      - name: Install Inno Setup 7.1.0
+        shell: pwsh
+        run: |
+          $url = 'https://github.com/jrsoftware/issrc/releases/download/is-7_1_0/innosetup-7.1.0-x64.exe'
+          # 下载来的安装程序要以管理员身份执行，先核对 SHA-256，对不上就不装。
+          $expected = '0362a383ed217d4c4239b5933866dd96d3eb2102737da92f80f6057a4b40df2f'
+          $exe = Join-Path $env:RUNNER_TEMP 'innosetup.exe'
+          Invoke-WebRequest -Uri $url -OutFile $exe
+          $actual = (Get-FileHash -Path $exe -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($actual -ne $expected) { throw "Inno Setup 安装程序 SHA-256 不符：$actual" }
+          Start-Process -FilePath $exe -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/SP-' -Wait
+          & "${env:ProgramFiles}\Inno Setup 7\ISCC.exe" --version
+
+      # 复用现有打包脚本（PS 5.1 语义，脚本带 BOM 的中文注释依赖它）：产物在 target\installer\qingjian-<版本>-windows-x86_64-setup.exe
+      - name: Build installer
+        shell: pwsh
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File apps\windows\installer\build.ps1
+
+      - name: Upload installer artifact
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: qingjian-windows-x86_64-setup
+          path: target/installer/*.exe
+          if-no-files-found: error
