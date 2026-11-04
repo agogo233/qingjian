@@ -14,6 +14,7 @@ use super::lock;
 use super::round::{handle_incoming, sync_peer};
 use super::scan;
 use super::state::{Nearby, Shared, now_millis};
+use super::admit;
 use crate::discovery::{Discovery, Found};
 
 /// 隔多久主动对一次账，兜住错过的通知。
@@ -39,8 +40,17 @@ pub(super) fn spawn_accept(
         while !stop.load(Ordering::Relaxed) {
             match listener.accept() {
                 Ok((stream, address)) => {
+                    // 满员就先不接：睡一拍再收，别在拒绝分支里空转烧 CPU
+                    let Some(guard) = admit() else {
+                        thread::sleep(POLL);
+                        continue;
+                    };
                     let shared = shared.clone();
-                    thread::spawn(move || handle_incoming(stream, address, &shared));
+                    // guard 随闭包活到连接处理完，线程一退名额就腾出来
+                    thread::spawn(move || {
+                        let _keep = guard;
+                        handle_incoming(stream, address, &shared);
+                    });
                 }
                 Err(error) if error.kind() == std::io::ErrorKind::WouldBlock => {
                     thread::sleep(POLL);

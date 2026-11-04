@@ -23,7 +23,7 @@ pub use received_item::ReceivedItem;
 pub use state::Nearby;
 
 use std::net::{SocketAddr, TcpListener, TcpStream};
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::sync::mpsc::{Sender, channel};
 use std::sync::{Arc, Mutex, PoisonError};
 use std::thread::{self, JoinHandle};
@@ -51,6 +51,31 @@ const CONNECT_TIMEOUT: Duration = Duration::from_secs(3);
 
 /// 读写超时：连上之后对方不说话多久算断。
 pub(crate) const IO_TIMEOUT: Duration = Duration::from_secs(15);
+
+/// 同时处理多少条进来的连接，再多就先拒掉：端口对外网可达，兜住连接洪泛把线程和内存吃光。
+const MAX_CONNECTIONS: usize = 64;
+
+/// 当前在处理的进来的连接数。
+static CONN_ACTIVE: AtomicUsize = AtomicUsize::new(0);
+
+/// 占一个连接名额：满员返回 `None`（调用方直接丢掉这条连接），成功返回 guard，丢掉 guard 时自动腾位。
+pub(super) fn admit() -> Option<ConnectionGuard> {
+    let previous = CONN_ACTIVE.fetch_update(
+        Ordering::Relaxed,
+        Ordering::Relaxed,
+        |active| (active < MAX_CONNECTIONS).then_some(active + 1),
+    );
+    previous.ok().map(|_| ConnectionGuard)
+}
+
+/// 进来的一条连接：活着就占一个名额，drop 时腾出来。名额只在这里减，跟 [`admit`] 一对一，不会减过头。
+pub(super) struct ConnectionGuard;
+
+impl Drop for ConnectionGuard {
+    fn drop(&mut self) {
+        CONN_ACTIVE.fetch_sub(1, Ordering::Relaxed);
+    }
+}
 
 pub struct SyncService {
     shared: Arc<Shared>,

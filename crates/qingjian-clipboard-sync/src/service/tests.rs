@@ -5,6 +5,7 @@ use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 use super::{PeerStatus, SyncEvent, SyncOptions, SyncService};
+use super::{admit, MAX_CONNECTIONS};
 use crate::error::SyncError;
 use crate::record::{Record, Stamp};
 use crate::sync::Replica;
@@ -175,4 +176,35 @@ fn pair_push_and_refuse_after_unpair() {
     for directory in directories {
         let _ = std::fs::remove_dir_all(directory);
     }
+}
+
+/// 连接名额：占满 `MAX_CONNECTIONS` 个后 `admit` 拒绝，腾位后又能进。
+/// 全局计数可能被并发的连接测试占着名额，所以用循环争取，不假定进来时是空。
+#[test]
+fn admit_caps_concurrent_incoming_connections() {
+    let mut held = Vec::new();
+    for _ in 0..MAX_CONNECTIONS {
+        let guard = loop {
+            if let Some(guard) = admit() {
+                break guard;
+            }
+            // 名额被同时跑的其它测试占着，等它们腾位
+            std::thread::sleep(Duration::from_millis(50));
+        };
+        held.push(guard);
+    }
+    assert!(
+        matches!(admit(), None),
+        "占满 {} 个后应拒绝新连接",
+        MAX_CONNECTIONS
+    );
+    drop(held);
+    let deadline = std::time::Instant::now() + Duration::from_secs(5);
+    while std::time::Instant::now() < deadline {
+        if admit().is_some() {
+            return;
+        }
+        std::thread::sleep(Duration::from_millis(50));
+    }
+    panic!("名额腾出后应能重新 admit");
 }
