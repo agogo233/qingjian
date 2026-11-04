@@ -96,11 +96,11 @@ impl Checker {
         });
     }
 
-    /// 要提示的新版本：开关开着、渠道里看得到、比当前新（装完新版后旧结果自然失效）。
+    /// 要提示的新版本：渠道里看得到、比当前新（装完新版后旧结果自然失效）。
     pub fn available(&self, config: &UpdateConfig) -> Option<Available> {
         let version = self.version.as_ref()?;
         let state = self.lock();
-        Self::relevant(&state, version, config).cloned()
+        Self::relevant(&state, version, config.channel).cloned()
     }
 
     /// 参与比较的版本号：`QINGJIAN_UPDATE_VERSION` 可以顶替壳的版本号（拿 `-dev` 包测提示用）。
@@ -153,19 +153,17 @@ impl Checker {
     ) -> Option<Available> {
         let version = Version::parse(&Self::effective_version(current))
             .filter(|version| !version.is_dev())?;
-        Self::relevant(state, &version, config).cloned()
+        Self::relevant(state, &version, config.channel).cloned()
     }
 
+    /// 落盘结果里该不该提示：渠道看得到、比当前新（装完新版后旧结果自然失效）。
     fn relevant<'a>(
         state: &'a UpdateState,
         version: &Version,
-        config: &UpdateConfig,
+        channel: UpdateChannel,
     ) -> Option<&'a Available> {
-        if !config.check {
-            return None;
-        }
         state.available.as_ref().filter(|found| {
-            config.channel.includes(&found.channel)
+            channel.includes(&found.channel)
                 && Version::parse(&found.version).is_some_and(|found| &found > version)
         })
     }
@@ -233,17 +231,22 @@ mod tests {
     }
 
     #[test]
-    fn saved_prerelease_is_hidden_on_the_stable_channel_and_when_off() {
+    fn saved_prerelease_is_hidden_on_the_stable_channel() {
         let state = state("0.1.4-beta.1", "beta");
         assert!(
             Checker::available_in(&state, "0.1.3", &config(true, UpdateChannel::Beta)).is_some()
         );
         assert!(
-            Checker::available_in(&state, "0.1.3", &config(true, UpdateChannel::Stable)).is_none()
+            Checker::available_in(&state, "0.1.3", &config(false, UpdateChannel::Stable)).is_none()
         );
-        assert!(
-            Checker::available_in(&state, "0.1.3", &config(false, UpdateChannel::Beta)).is_none()
-        );
+    }
+
+    #[test]
+    fn saved_result_still_prompts_with_auto_check_off() {
+        // 自动检查关着，手动查到并落盘的新版本照样提示
+        let state = state("0.1.4", "stable");
+        let off = config(false, UpdateChannel::Stable);
+        assert!(Checker::available_in(&state, "0.1.3", &off).is_some());
     }
 
     #[test]

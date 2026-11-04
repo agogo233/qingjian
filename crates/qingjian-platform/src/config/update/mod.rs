@@ -6,11 +6,12 @@ use serde::{Deserialize, Serialize};
 
 /// 配置文件 `[update]` 分节：检查更新。
 ///
-/// 每天向官网读一次版本索引，有新版就在菜单与设置的「关于」页提示；请求不带任何标识，不下载也不安装。
+/// 开着自动检查时每天向官网读一次版本索引；有新版就在菜单与设置的「关于」页提示。
+/// 请求不带任何标识，不下载也不安装。关着时只在你点「立即检查」时才联网。
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(default)]
 pub struct UpdateConfig {
-    /// 开着就每天检查一次。
+    /// 开着就每天自动检查一次；关着只手动查。不影响查到新版后的提示。
     pub check: bool,
 
     /// 看哪个渠道的版本。
@@ -20,7 +21,7 @@ pub struct UpdateConfig {
 impl Default for UpdateConfig {
     fn default() -> Self {
         Self {
-            check: true,
+            check: false,
             channel: UpdateChannel::default(),
         }
     }

@@ -96,7 +96,7 @@ fn swap_translator(
 }
 
 impl Router {
-    /// 检查更新查到了要提示的新版本（开关关着、本地开发包都不算）。
+    /// 检查更新查到了要提示的新版本（渠道里看得到、比当前新才算；本地开发包不算）。
     pub(super) fn update_available(&self) -> bool {
         self.reload.as_ref().is_some_and(|reload| {
             reload
