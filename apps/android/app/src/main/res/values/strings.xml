@@ -205,7 +205,9 @@
     <string name="swipe_input_title">滑行输入</string>
     <string name="swipe_input_note">手指不抬起，依次划过要打的字母；打不出来就照常点</string>
     <string name="flick_symbols_title">上滑输入</string>
-    <string name="flick_symbols_note">在键上往上一划，上屏键上角的数字或符号</string>
+    <string name="flick_symbols_note">在键上往上一划（斜着划也算），上屏键上角的数字或符号</string>
+    <string name="long_press_upper_title">长按出大写</string>
+    <string name="long_press_upper_note">长按字母不滑直接松手，上屏大写字母；关着时上屏键上角的符号</string>
     <string name="space_cursor_title">空格滑动移动光标</string>
     <string name="space_cursor_note">按住空格左右滑，按滑过的距离逐字移动光标；打拼音时不响应</string>
     <string name="spelling_correction_title">拼写纠错</string>
@@ -263,6 +265,15 @@
     <string name="export_note">学过的词、生词本、统计和常用语打包成一个文件，不含剪贴板和导入的词库</string>
     <string name="export_done">已导出 %1$d 个文件</string>
     <string name="export_failed">导出失败，换个位置再试</string>
+    <string name="logs_section">日志</string>
+    <string name="logs_export_title">打包日志</string>
+    <string name="logs_send">发送给…</string>
+    <string name="logs_save">存到手机</string>
+    <string name="logs_export_note">日志、设置和机型信息打包成一个文件，直接发到 QQ、微信或存到手机，反馈问题时附上；不含密钥，不开详细日志时也不含打的字</string>
+    <string name="logs_export_done">已打包 %1$d 个文件</string>
+    <string name="logs_export_empty">还没有日志</string>
+    <string name="logs_verbose_title">详细日志</string>
+    <string name="logs_verbose_note">会记下打的内容，复现完问题请关掉</string>
     <string name="clear_learning_title">清空学习数据</string>
     <string name="clear_learning_note">统计、常用语、剪贴板、词库和设置不受影响</string>
     <string name="clear_habits">输入习惯（常选的词、造的词）</string>
@@ -307,6 +318,12 @@
     <string name="section_pinyin">拼音</string>
     <string name="section_mixed">中英混打</string>
     <string name="section_punctuation">标点与字形</string>
+    <string name="section_extras">候选后面</string>
+    <string name="extras_emoji">emoji</string>
+    <string name="extras_kaomoji">颜文字</string>
+    <string name="extras_symbols">符号</string>
+    <string name="extras_off">不显示</string>
+    <string name="extras_note">一次最多配几个：kaixin → 开心 😄，ku → 哭 (T_T)，yuedengyu → 约等于 ≈；不显示时候选里只有字词</string>
     <string name="section_gestures">手势</string>
 
     <string name="page_game_keyboard">游戏键盘</string>

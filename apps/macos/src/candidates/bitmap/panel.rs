@@ -113,6 +113,11 @@ impl PanelPainter {
             HitTarget::Panel(PanelHit::Cell(offset)) => Some(PanelMouse::Cell { offset, double }),
             HitTarget::Panel(PanelHit::Group(group)) => Some(PanelMouse::Group(group)),
             HitTarget::Panel(PanelHit::Section(section)) => Some(PanelMouse::Section(section)),
+            HitTarget::Panel(PanelHit::Candidate(index)) => Some(PanelMouse::Candidate(index)),
+            HitTarget::Panel(PanelHit::Caret(position)) => Some(PanelMouse::Caret {
+                position,
+                extend: false,
+            }),
             HitTarget::Panel(PanelHit::Close) => Some(PanelMouse::Close),
             _ => None,
         }
