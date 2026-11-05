@@ -66,6 +66,22 @@ impl Settings {
         }
     }
 
+    /// 列表里直接删掉第 i 条；删成了就把正编辑它的卡片关掉。
+    pub(super) fn remove_phrase(&mut self, index: usize) {
+        if index >= self.config.custom_phrases.len() {
+            return;
+        }
+        let mut list = self.config.custom_phrases.clone();
+        list.remove(index);
+        if let Err(error) = self.write_phrases(&list) {
+            self.notice = Some(("phrases", error));
+            return;
+        }
+        if self.phrase.as_ref().is_some_and(|editor| editor.index == Some(index)) {
+            self.close_phrase();
+        }
+    }
+
     /// 卡片里填的这一条；权重不是范围内的整数时报错。
     fn phrase_draft(&self, editor: &PhraseEditor) -> Result<CustomPhrase, String> {
         let field = |id| {

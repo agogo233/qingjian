@@ -42,3 +42,23 @@ fn retired_zhiwei_is_rewritten_on_start() {
     );
     std::fs::remove_dir_all(path.parent().unwrap()).unwrap();
 }
+
+/// 列表里删掉一条：配置写回少一条；卡片正编辑这一条时连卡片关掉；越界不动。
+#[test]
+fn removing_a_phrase_writes_the_config() {
+    let path = temp_config(
+        "remove-phrase",
+        "[[custom_phrases]]\ncode = \"aa\"\ntext = \"你好\"\n\n[[custom_phrases]]\ncode = \"bb\"\ntext = \"再见\"\n",
+    );
+    let mut settings = Settings::load(path.clone());
+    assert_eq!(settings.config.custom_phrases.len(), 2);
+    settings.open_phrase(Some(0));
+    settings.remove_phrase(0);
+    assert!(settings.phrase.is_none());
+    assert_eq!(settings.config.custom_phrases.len(), 1);
+    assert_eq!(settings.config.custom_phrases[0].code, "bb");
+    assert_eq!(Config::load(&path).unwrap().custom_phrases.len(), 1);
+    settings.remove_phrase(99);
+    assert_eq!(settings.config.custom_phrases.len(), 1);
+    std::fs::remove_dir_all(path.parent().unwrap()).unwrap();
+}

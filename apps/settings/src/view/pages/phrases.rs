@@ -1,5 +1,5 @@
-//! 「自定义短语」页：每条一行（开关、输入码、权重、内容的开头、编辑），末尾新增与导入导出；macOS 另有「也用系统的文本替换」。
-//! 新增、编辑在对话框里改，保存时整张表校验。
+//! 「自定义短语」页：每条一行（开关、输入码、权重、内容的开头、编辑、删除），末尾新增与导入导出；macOS 另有「也用系统的文本替换」。
+//! 新增、编辑在对话框里改，保存时整张表校验；删除点一下就删。
 
 use bamboo_slip::taffy::{
     AlignItems, Dimension, FlexDirection, JustifyContent, LengthPercentage, LengthPercentageAuto,
@@ -130,6 +130,12 @@ fn phrase_row(
         ("phrase-edit", index),
         Message::OpenPhrase(Some(index)),
     )?;
+    let remove = Button::new(tr("phrases.delete")).build(
+        ui,
+        theme,
+        ("phrase-remove", index),
+        Message::RemovePhrase(index),
+    )?;
     let trailing = ui.scene().node(
         Style {
             flex_direction: FlexDirection::Row,
@@ -138,7 +144,7 @@ fn phrase_row(
             ..Style::default()
         },
         Visual::Group,
-        &[preview, edit],
+        &[preview, edit, remove],
     )?;
     let space = LengthPercentage::length(page.px(10.0));
     ui.scene().node(

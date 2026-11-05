@@ -8,7 +8,7 @@ In 设置 → 自定义短语 (Settings → Custom phrases), give a piece of tex
 
 ## Adding and editing
 
-Each phrase is a row on the page: an on/off switch (labelled with the input code), its weight, the first line of its content, and 编辑 (Edit); the last two rows are 新增… (Add…) and 导入、导出 (Import, export).
+Each phrase is a row on the page: an on/off switch (labelled with the input code), its weight, the first line of its content, 编辑 (Edit), and 删除 (Delete, one click removes the phrase); the last two rows are 新增… (Add…) and 导入、导出 (Import, export).
 
 Adding and editing happen in a card that pops up:
 
@@ -56,7 +56,7 @@ The exported file uses the same `[[custom_phrases]]` format as the configuration
 - Choosing 置顶 (Pin to top) from a candidate's right-click menu while typing also adds an entry here, weighted above every existing phrase for that input code (999 at most); see [Candidate right-click menu](habits.md#Candidate-right-click-menu).
 
 They also work in English mode, but only phrases whose content has no Chinese in it come through: once the whole code is typed, the phrase comes before the English word candidates (`dont` → `don't`). A phrase with Chinese content (including one added by right-clicking 置顶 (Pin to top) in Chinese mode) won't appear in English mode, so `Space` there can't commit Chinese. With Traditional Chinese output on they're still committed as written.
-If a phrase is changed in another settings window while you're editing it, saving warns you and keeps your draft instead of overwriting.
+If the phrases are changed or removed elsewhere while you're editing one (including removing another row on this page), saving warns you and keeps your draft instead of overwriting.
 
 ## System text replacements (macOS)
 

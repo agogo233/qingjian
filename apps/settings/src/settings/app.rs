@@ -108,6 +108,7 @@ impl App for Settings {
                     });
                 }
             }
+            Message::RemovePhrase(index) => self.remove_phrase(index),
             Message::ImportPhrases => self.import_phrases(),
             Message::ExportPhrases => self.export_phrases(),
             Message::ImportConfig => self.import_config(),

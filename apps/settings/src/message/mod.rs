@@ -55,6 +55,8 @@ pub enum Message {
     ClosePhrase,
     /// 列表里直接开关第 i 条。
     TogglePhrase(usize),
+    /// 列表里直接删掉第 i 条，点一下就删。
+    RemovePhrase(usize),
     /// 选文件导入短语，与已有的合并。
     ImportPhrases,
     /// 把短语存成一个文件。
