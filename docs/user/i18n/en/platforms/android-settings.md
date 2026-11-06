@@ -42,6 +42,7 @@ The right side of each row shows the current setting, such as the input method o
   - Fuzzy pinyin: z = zh, c = ch, s = sh, n = l, f = h, l = r, an = ang, en = eng and in = ing are available; see [Pinyin schemes and fuzzy pinyin](../input/fuzzy-and-shuangpin.md#Fuzzy-pinyin). Not yet supported on the 9-key keypad.
   - Spelling correction: when you mistype pinyin, corrected candidates are offered; when what you typed still reads as valid pinyin, corrections only come later as alternatives. On by default; it's the same setting as 输入 → 纠错 (Input → Correction) on desktop.
   - Keep partial picks until done: on by default; when off, each pick is committed immediately.
+  - 上屏后联想 (Suggest the next word): after you pick a word, the candidate bar offers words likely to follow it, committed with a tap; on by default.
 - **中英混打 (Mixed Chinese and English)**:
   - English words while typing pinyin: input such as `hello` or `compa` brings English words among the candidates; you can also choose 中文排在英文词前面 (Chinese before English words).
   - Candidates on the English keyboard: when on, tap a candidate to get it, and space, digits and punctuation commit the letters as typed; when off, letters on the English keyboard are committed directly without candidates.
@@ -55,9 +56,9 @@ The right side of each row shows the current setting, such as the input method o
 
 设置 → 键盘 (Settings → Keyboard):
 
-- **尺寸 (Size)**: keyboard height, which you can also drag directly on the keyboard with ↕ in the toolbar; with full-screen adaptation on, a key is placed on each side of the gesture bar, and you can choose which.
+- **尺寸 (Size)**: keyboard height, which you can also drag directly on the keyboard with ↕ in the toolbar; with full-screen adaptation on, a key is placed on each side of the gesture bar, and you can choose which; if both sides are set to 不放 (None), the strip goes away and the keyboard sits right above the gesture bar.
 - **按键 (Keys)**: key vibration (off / light / standard / strong; standard is the original feel), key label size (small / standard / large / extra large, separate from the candidate size), key popups, and layout (default / left-handed).
-- **手势 (Gestures)**: swipe typing, swipe up for symbols, long press for capitals, slide space to move the cursor, hold space to talk, and keep Chinese when switching languages; see [Android: keyboard and typing](android.md).
+- **手势 (Gestures)**: swipe typing, swipe up for symbols, long press for capitals, swipe up on delete to clear, slide space to move the cursor, hold space to talk, and keep Chinese when switching languages; see [Android: keyboard and typing](android.md).
 - **游戏键盘 (Game keyboard)**: a small, semi-transparent floating keyboard in landscape in the apps you tick; the transparency, size, glosses and the list of apps are on this page; see [Android: keyboard and typing](android.md#Game-keyboard).
 
 ## Appearance
@@ -65,7 +66,7 @@ The right side of each row shows the current setting, such as the input method o
 设置 → 外观 (Settings → Appearance):
 
 - Light/dark: follow system, light or dark; the app and the keyboard change together (the app itself needs Android 12 or later; on earlier versions it follows the system). 樱花, 大肥鱼, 初音未来 and 波奇酱 are light only and stay light when dark is chosen.
-- Themes: the same nine themes as on desktop (青简绿, 系统蓝, 微信绿, 素笺, 玻璃, 樱花, 大肥鱼, 初音未来, 波奇酱), each card showing what the candidate bar and keyboard look like. Once selected, the keyboard, candidate bar, symbol and emoji panels and quick translation bar all take on that theme's colours.
+- Themes: the same ten themes as on desktop (青简绿, 系统蓝, 微信绿, 素笺, 玻璃, 墨岩, 樱花, 大肥鱼, 初音未来, 波奇酱), each card showing what the candidate bar and keyboard look like. Once selected, the keyboard, candidate bar, symbol and emoji panels and quick translation bar all take on that theme's colours.
 - Candidate size: small, standard, large or extra large; candidates and glosses scale together, including when all candidates are expanded, and the candidate bar gets taller with larger sizes. The labels on the keys are set separately under 设置 → 键盘 → 键面字号 (Settings → Keyboard → Key label size).
 
 The preview at the top of the page shows the current theme, light/dark mode and size.
@@ -77,6 +78,7 @@ The preview at the top of the page shows the current theme, light/dark mode and 
 - Topic dictionaries: law, medicine, place names, idioms, famous lines of poetry, IT and computing, finance, food, animals, cars, historical figures. They ship with the app and can be turned on one by one. Idioms are on by default.
 - Importing dictionaries: tap 导入词库 (Import dictionary) and choose files in the system file picker; you can select several. The format is the same as pinyin dictionaries on desktop, see [Dictionaries](../personalize/dictionaries.md#Importing-your-own-dictionaries). The name and entry count are shown after importing.
 - Imported dictionaries can be turned on or off individually; after 删除 (Delete) they need to be imported again. Turning on, importing and deleting take effect immediately on the keyboard in use.
+- 通讯录 (Contacts): off by default; when you turn it on, the system asks whether Qingjian may read your contacts. Names of 2–6 Chinese characters can then be typed and appear on the first page with a person icon; 上屏名字后给出电话、邮箱 (Offer phone and email after a name) can be turned off separately. Names and numbers are used only on your phone; see [Privacy](../help/privacy.md#Contacts-on-Android).
 
 ## Exporting and clearing
 

@@ -101,6 +101,10 @@ class Engine(context: Context, private val onReady: () -> Unit) {
 
     fun clear(): Frame = Frame.parse(Native.clear(handle))
 
+    fun cleared(text: String): Frame = Frame.parse(Native.cleared(handle, text))
+
+    fun hasOffer(): Boolean = ready && Native.hasOffer(handle)
+
     fun setNineKey(on: Boolean): Frame = Frame.parse(Native.setNineKey(handle, on))
 
     fun pin(alternative: String): Frame = Frame.parse(Native.pin(handle, alternative))
@@ -186,6 +190,10 @@ class Engine(context: Context, private val onReady: () -> Unit) {
     fun setPrivate(private: Boolean) {
         if (ready) Native.setPrivate(handle, private)
     }
+
+    /** 交通讯录（见 [Native.setContacts]）；引擎还没装好返回 -1。 */
+    fun setContacts(contacts: String, details: Boolean): Int =
+        if (ready) Native.setContacts(handle, contacts, details) else -1
 
     fun cancelTranslation() {
         if (ready) Native.cancelTranslation(handle)

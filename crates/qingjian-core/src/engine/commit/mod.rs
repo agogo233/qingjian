@@ -9,6 +9,7 @@ use super::{
     EXPLICIT_TRANSITION_WEIGHT, Engine, choice_key, reading_key, segment_longest_prefix,
 };
 use crate::candidate::{Candidate, CandidateKind, CandidateList, Language};
+use crate::correction::edit_distance;
 use crate::{parser, sentence};
 use qingjian_dictionary::Dictionary;
 use std::time::Instant;
@@ -87,7 +88,7 @@ impl Engine {
     /// 开了自动空格（[`Self::set_auto_space`]）时与上文、候选内部的中西文交界都补好空格。
     /// 面板开着时上屏的是面板里的条目：记一次使用（私密输入不记），下次打开排进「常用」。
     pub fn commit(&mut self, candidate: &Candidate) -> String {
-        if self.take_panel().is_some() && !self.private {
+        if self.take_panel().is_some() && !self.private && !self.is_contact(&candidate.text) {
             self.panel_history.record(&candidate.text);
         }
         let lead = self.auto_space_before(&candidate.text);
@@ -100,6 +101,26 @@ impl Engine {
     /// [`Self::commit`] 的内部形式：`source` 写进输入日志（上屏译词时不是候选本身），
     /// `used_sense` 是直接打出去的那条译词的序号（词汇记录里算「用过」）。
     pub(super) fn commit_with(
+        &mut self,
+        candidate: &Candidate,
+        source: InputSource,
+        used_sense: Option<usize>,
+    ) -> String {
+        // 通讯录里的名字只在本机用：上屏照常吃拼音，学习与输入日志这一次都不记
+        let mute = !self.private && self.is_contact(&candidate.text);
+        if mute {
+            self.learner.set_private(true);
+            self.logger.set_muted(true);
+        }
+        let text = self.commit_recorded(candidate, source, used_sense);
+        if mute {
+            self.learner.set_private(false);
+            self.logger.set_muted(false);
+        }
+        text
+    }
+
+    fn commit_recorded(
         &mut self,
         candidate: &Candidate,
         source: InputSource,
@@ -677,22 +698,3 @@ const RETYPE_MIN_LETTERS: usize = 3;
 
 /// 跨上屏重打最多差几处编辑。
 const RETYPE_MAX_EDITS: usize = 2;
-
-/// Levenshtein 编辑距离（按字节，键串都是 ASCII）。
-fn edit_distance(a: &str, b: &str) -> usize {
-    let a = a.as_bytes();
-    let b = b.as_bytes();
-    let mut previous: Vec<usize> = (0..=b.len()).collect();
-    let mut current = vec![0; b.len() + 1];
-    for (i, &ca) in a.iter().enumerate() {
-        current[0] = i + 1;
-        for (j, &cb) in b.iter().enumerate() {
-            let cost = usize::from(ca != cb);
-            current[j + 1] = (previous[j] + cost)
-                .min(previous[j + 1] + 1)
-                .min(current[j] + 1);
-        }
-        std::mem::swap(&mut previous, &mut current);
-    }
-    previous[b.len()]
-}

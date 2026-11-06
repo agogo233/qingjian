@@ -45,6 +45,12 @@ internal object Native {
 
     external fun clear(handle: Long): String?
 
+    /** 删除键上划清掉了光标前的 [text]（壳已经删了）：帧里放一个「撤销」，选它原样放回。 */
+    external fun cleared(handle: Long, text: String): String?
+
+    /** 候选条上放着上屏名字后的电话邮箱、或清空后的「撤销」：删除键、重输键先只收起它们。 */
+    external fun hasOffer(handle: Long): Boolean
+
     external fun setNineKey(handle: Long, on: Boolean): String?
 
     external fun pin(handle: Long, alternative: String): String?
@@ -181,6 +187,12 @@ internal object Native {
 
     /** 私密输入：应用声明不要学习的输入框里不学习、不记统计与生词、不发云端。 */
     external fun setPrivate(handle: Long, private: Boolean)
+
+    /**
+     * 通讯录（`[{"name":…,"details":[…]}]`，空数组即关掉）：名字并进候选，[details] 是上屏名字后给不给电话、邮箱。
+     * 返回收进来的名字数，出错 -1。
+     */
+    external fun setContacts(handle: Long, contacts: String, details: Boolean): Int
 
     /** 测试连接，阻塞到有结果（请求自带超时），只能在后台线程调；回 `{ok, message}`。 */
     external fun cloudTest(settings: String): String?
