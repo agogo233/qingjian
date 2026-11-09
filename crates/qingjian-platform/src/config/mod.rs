@@ -271,6 +271,8 @@ horizontal_grid = false
 # 横排时翻页键（主翻页键、额外翻页键、PageUp / PageDown、Tab）也像 ↓ 一样展开成矩阵并换行，展开后一次翻一屏。
 # 缺省 false：翻页键照旧整页翻。macOS 与 Windows 用
 grid_page_keys = false
+# 竖排的候选窗口放在光标上方时（下方放不下）倒着排，1 在最下面、紧挨输入行；缺省关。只有 Windows 用
+vertical_reverse_above = false
 # 候选窗口由谁绘制：qingjian 青简渲染器（各平台一致，主题走它）/ system 系统原生绘制（渲染器有问题时的退路）
 renderer = "qingjian"
 # 候选窗口字体（字族名，如 "LXGW WenKai"）；空为系统字体。只对青简渲染器生效，没装这个字体时自动回到系统字体
@@ -278,6 +280,8 @@ font = ""
 # 候选字、译文的字号（点），盖过主题；0 用主题的。只对青简渲染器生效
 candidate_font_size = 0
 annotation_font_size = 0
+# 候选字的字重（粗细），100–900（400 常规、500 中等、700 粗体），盖过主题；0 用主题的。只对青简渲染器生效
+candidate_font_weight = 0
 # 候选窗口的过渡动画（高亮滑动、主题里的循环动画）；false 时直接跳到位，与系统「减弱动态效果」一样
 animations = true
 # 组句中的拼音显示在哪：both 行内和候选窗口 / inline 只在行内 / window 只在候选窗口（应用里不放 marked text）
@@ -324,6 +328,12 @@ remember_mode_per_app = false
 full_width_punctuation = true
 # 英文模式下的同一件事，中英各记一份，状态条切的是当前模式那份；只有 Windows 用
 english_full_width_punctuation = false
+# 敲左括号、左引号、左书名号时连右半边一起补上，光标停在中间；紧接着敲右半边跳过补上的那个，刚补完就退格两个一起删。
+# 中文与日文模式一份（缺省开），英文模式一份（缺省关：代码编辑器自己会补）。Windows 与 Android 用
+pair_punctuation = true
+english_pair_punctuation = false
+# 中文标点开着也保持半角的符号，几个连写；比如写 "`" 让 ` 键出反引号而不是间隔号 ·。缺省空
+half_width_symbols = ""
 # 组句中敲会转全角的标点（, . ? ! 等，翻页键除外）先把高亮候选上屏、再补该标点（nihao, 一气打完「你好，」）；
 # 缺省 false：标点进英文直输段，与以前一致
 punct_commits = false
@@ -377,6 +387,8 @@ system_text_replacements = true
 toggle_punctuation = ""
 # Windows：在简体与上次用的繁体字形之间切换；空串禁用，可设为 "ctrl+shift+f" 或其他修饰键加字母、数字
 toggle_traditional = ""
+# Windows：组句中只看单字，再按一次恢复，上屏完自动回到正常候选；只在打字时拿走这个组合。空串禁用
+single_chars = "ctrl+d"
 # Windows：主翻页键之外同时启用的键对，可多选，如 ["[]", ",.", "-="]
 extra_page_keys = []
 # 前缀模式键，只能是 v / u / i 之一且互不相同（这三个字母不是任何拼音音节的开头）
