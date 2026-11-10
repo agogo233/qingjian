@@ -2,6 +2,7 @@ use std::path::PathBuf;
 
 use clap::{Parser, Subcommand, ValueEnum};
 
+use crate::chaizi::ChaiziOptions;
 use crate::mmh::MmhReferenceOptions;
 use crate::stroke::StrokeOptions;
 
@@ -102,17 +103,10 @@ pub enum Command {
         words: PathBuf,
     },
 
-    /// 拆字表：開放詞典網拆字字典 + 词库读音 → chaizi.tsv（`字\t读音\t部件拼音串`），编进 Core 给问字模式按部件找字。
+    /// 拆字表：開放詞典網拆字字典（简体 + 繁体）+ 词库读音 + 繁简索引
+    /// → `chaizi.tsv`（`字\t读音\t拆法部件\t拆法读音`），编进 Core 给问字模式按部件读音或笔画找字。
     /// 生成后放到 `crates/qingjian-core/data/chaizi.tsv`（`--out-dir crates/qingjian-core/data`）
-    Chaizi {
-        /// 拆字字典（`字\t拆法…`，拆法里部件空格分隔）
-        #[arg(long, default_value = "assets/chaizi/chaizi-jt.txt")]
-        chaizi: PathBuf,
-
-        /// 青简词库（`词\t音节\t词频`），取单字读音与字频
-        #[arg(long, default_value = "assets/lexicon/dict.tsv")]
-        dictionary: PathBuf,
-    },
+    Chaizi(ChaiziOptions),
 
     /// 形码码表（五笔）：Rime `.dict.yaml` → `词\t编码\t词频`。词频由青简词库按词面回填，不用码表自带的权重
     Wubi {
@@ -161,6 +155,17 @@ pub enum Command {
         /// 词频表（`编码\t词频`，`tools/corpus/english_frequency.py` 生成）；给了就写进第三列，前缀补全按它排
         #[arg(long)]
         frequency: Option<PathBuf>,
+    },
+
+    /// CMU 发音词典（`cmudict.dict`，ARPAbet）→ `english-ipa.tsv`：`词\t/IPA/`（General American），
+    /// 随包给英文候选显示音标。只收纯小写字母的词，多音词取第一个
+    Ipa {
+        /// 输入的 CMUdict 文件（`cmudict.dict`）
+        input: PathBuf,
+
+        /// 输出文件名（写在 --out-dir 下）
+        #[arg(long, default_value = "english-ipa.tsv")]
+        name: String,
     },
 
     /// Unicode CLDR emoji annotations（`annotations/<语言>/annotations.json`、`annotationsDerived/…`）→ emoji-<语言>.tsv：`词\temoji …`

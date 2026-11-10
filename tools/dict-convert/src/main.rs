@@ -29,6 +29,7 @@ mod codes;
 mod emoji;
 mod english;
 mod error;
+mod ipa;
 mod lexicon;
 mod mmh;
 mod oov_filter;
@@ -120,11 +121,13 @@ fn run() -> Result<(), ConvertError> {
             tracing::info!(characters, "单字声调表已写出");
             Ok(())
         }
-        Command::Chaizi { chaizi, dictionary } => {
-            let summary = chaizi::convert(&chaizi, &dictionary, &args.out_dir.join("chaizi.tsv"))?;
+        Command::Chaizi(options) => {
+            let summary = chaizi::convert(&options, &args.out_dir)?;
             tracing::info!(
                 characters = summary.characters,
+                splits = summary.splits,
                 unread = summary.unread,
+                merged_from_traditional = summary.merged,
                 "拆字表已写出"
             );
             Ok(())
@@ -164,6 +167,7 @@ fn run() -> Result<(), ConvertError> {
             frequency.as_deref(),
             &args.out_dir.join("english.tsv"),
         ),
+        Command::Ipa { input, name } => ipa::convert(&input, &args.out_dir.join(name)),
         Command::Emoji { inputs, language } => emoji::convert(
             &inputs,
             &args.out_dir.join(format!("emoji-{language}.tsv")),

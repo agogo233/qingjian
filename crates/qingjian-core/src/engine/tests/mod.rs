@@ -2,6 +2,7 @@
 
 mod auto_word;
 mod aux_code;
+mod blocked;
 mod candidate_menu;
 mod caret;
 mod chaizi;
@@ -178,6 +179,7 @@ impl Translator for FixedTranslator {
                     text: "develop".into(),
                     reading: None,
                     fresh: false,
+                    pronunciation: None,
                 }],
             )
         })

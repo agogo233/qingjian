@@ -95,6 +95,7 @@ pub fn init(mtm: MainThreadMarker, info: &BundleInfo) -> Result<(), HostError> {
         paths::dicts_dir().as_deref(),
         &settings.config().dictionaries,
     ));
+    engine.set_blocked_words(settings.config().dictionaries.blocked.clone());
     // 英文候选的中文释义（英→中）可选：没有这张表英文候选右侧就留空
     if let Ok(path) =
         paths::resource("glossary-zh.qj").or_else(|_| paths::resource("glossary-zh.tsv"))
@@ -202,6 +203,7 @@ pub fn init(mtm: MainThreadMarker, info: &BundleInfo) -> Result<(), HostError> {
             root_keyboard: None,
             preedit_mode: PreeditMode::default(),
             translation_pos: true,
+            show_english_pronunciation: false,
             layout: LayoutMode::default(),
             horizontal_grid: false,
             grid_page_keys: false,

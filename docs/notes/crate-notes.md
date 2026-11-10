@@ -9,6 +9,15 @@ CLAUDE.md 只保留目录地图与规则，每个 crate / app / tool 的实现�
 `lookup_pattern`（≥ 模式长度）与 `lookup_exact`（正好等长）同一套实现。词库键以 `v` 表示 ü，
 TSV 解析、查询与生成工具把 `lue` / `nue` 统一成 `lve` / `nve`。
 英文词表 `WordList`（`english.tsv`，9.5 万词）编码与原样词拼进一块缓冲、条目只记位置，按编码二分：每词三个 `String` 加 `HashMap` 时常驻 18 MB，现在约 4 MB（2026-10-28 探针）。
+英文音标复用同一结构（`assets/lexicon/english-ipa.tsv`，11.7 万条）：音标放「原样词」那列，由 `WordList::parse_pronunciations` 解析——**不能用 `parse`**，那个把第二列当编码，音标会被存成键；查询用 `pronunciation(code)`，键一律小写。
+数据由 `dict-convert ipa` 从 CMUdict 生成。ARPAbet → IPA 有两处不能机械查表：重音要**从元音挪到音节首**（`cargo` 是 `/ˈkɑrˌɡoʊ/` 不是 `/kˈɑrɡoʊ/`），先按最大起首音划界再插标记（元音之间的辅音从右往左取最长的合法首音串，`computer` 是 `/kəmˈpjutɚ/`，元音后的 R 留在左边）；无重音的 `AH` 是 schwa `ə` 而不是 `ʌ`（CMUdict 同一个符号表示两个音，只能靠调号区分，混了就会得到 `/hʌˈloʊ/`）。
+只覆盖产品词表的约 57%：CMUdict 不收规则派生的复数 / 过去式 / 进行式（`abacuses`、`abstracting`），查不到就不显示，不做后缀反推。
+候选侧不新增字段：音标填进 `Candidate::reading`（问字模式的带调拼音本来就走它）。英文候选的音标是辅助信息，平台层画在译文之后、用淡色；问字模式的带调拼音仍画在最前面、用译词色。
+中文候选的**英文译文**另走 `Sense::pronunciation`（与日语的 `Sense::reading` 分开：假名要按汉字段对位、`開発(かいはつ)する`；
+音标是整条译词的、`hello /həˈloʊ/`，不带括号）。由 `Engine::annotate` 在译文填好之后调 `annotate_pronunciation` 补，
+只认语言为英文且是单个词的译文——短语（`as if`）查不到就留 `None`，不按空格切词硬注。
+`[general] show_english_pronunciation`（缺省关）决定填不填；`Frame.english_reading_ipa` 决定候选自己的 reading 画成淡色还是译词色——DLL 读不到配置，开关必须经协议下发，纯加 `#[serde(default)]` 字段不 bump 协议版本。
+英文候选有三条生成路径（中英混输 `insert_english`、英文模式 `query_english`、英文直输段 `query_raw`），都走 `Engine::english_candidate`，漏一条那条就没有音标。
 旧 `.qj` 含这些键时，加载器建立规范化的内存词库。新 `.qj` 继续使用 mmap。
 TSV 的音节可带数字声调（`ni3`，轻声 5 或 0），键一律去调，声调只给显示（`Match::tones`，`tones.rs`）：五个音节以内压进 `Slot` 原来的 16 位填充（每音节 3 位，0 是不知道），
 多音字的读音占比：加载时走一遍单音节的键，记下有不止一个读音的字全部读音的词频之和（`dictionary/readings.rs`，不落盘），命中带上 `Match::reading_total`，`Match::reading_share` 是这个读音的词频占比（`区 ou` 约 0.05）；多音节的词不查表。
@@ -414,6 +423,8 @@ id 不能撞拼音侧的写法与日志里的 `wubi`（`is_valid_id`），因为
 都还在读、文件不自动改写。
 
 
+`[dictionaries] blocked` 是屏蔽词：`Engine::set_blocked_words` 收下这批词，`query` 在 `apply_demotions` 之前把文本里含有其中任何一个的候选整条丢掉（排在后面的重排、补单字、留联系人都不用管它们了）；自定义短语在过滤之后才插进来，不受影响。四个壳在装配与配置热重载两处各调一次。
+
 `Config`（TOML 配置文件，`[general]` / `[shortcut]` / `[fuzzy]` / `[dictionaries]` / `[apps]` / `[predict]` 分节，首次运行写模板，
 `set_value` 用 toml_edit 原地改键保留注释；`[model] enabled` 本地整句模型开关，`LocalModelConfig`；
 中英模式两项：`[shortcut] switch_mode`（`SwitchKeys`：勾选 shift / control / ctrl+alt+space，可多选，老配置的单个字符串照读）与 `[general] english_mode`（内置英文模式总开关））；
@@ -698,8 +709,8 @@ Windows 可选的 `[shortcut] toggle_punctuation` 经 `InputSettings` 下发，�
   该出专名写法的（I、China、VSCode）靠展示写法补充表 `07_display_forms.tsv` 后置读入；`cedict`：释义表备用来源。中英混杂词源在 `assets/lexicon/mixed_words.tsv`（`lexicon --extra-words`）。
 - `tones`：`assets/lexicon/02_common` 通用词表的数字声调逐字收成单字声调表（`字\t带调音节…`，轻声记 5，按词表排序号首次出现的顺序，第一个当首读音），
   `--out-dir crates/qingjian-core/data` 直接写到 Core 的 `data/tones.tsv`（`include_str!`，进 git，约 5 千字 50 KB）；通用词表没收的字没有声调，注音排序当查不到。
-- `chaizi`：開放詞典網拆字字典（`assets/chaizi/chaizi-jt.txt`，CC BY 3.0）的每种拆法按词库单字读音连成部件拼音串（林 → `mumu`；多音部件按词频取前 3 个读音交叉、一种拆法最多 16 串；有部件读不出的拆法跳过；原表同一个字分两行的合并），
-  行按字频排，写 Core 的 `data/chaizi.tsv`（约 1.4 万字 280 KB）。Core 的 `chaizi` 模块整串对上在前、前缀在后，问字模式出候选（`engine/query/modes.rs`），全是字母又拆得出字时数字键选字、不当码点。
+- `chaizi`：開放詞典網拆字字典（簡體 `chaizi-jt.txt` + 繁体 `chaizi-ft.txt`，CC BY 3.0）的每种拆法按词库单字读音写成部件串（林 → 部件 `木木`、读音 `mu'mu`；一个部件最多留 3 个读音，不再交叉展开），繁体表里「简体表没有的字」按 `fanjian_suoyin.txt` 落到简体主键（3012 字），`□` 占位退回原字；
+  行按字频排，写 Core 的 `data/chaizi.tsv`（1.7 万字 638 KB，`字\t读音\t拆法部件\t拆法读音`）。Core 的 `chaizi` 模块三张表编进二进制：`chaizi.tsv`（拆法）、`stroke.tsv`（键位形式的笔顺，`qingjian-dict-convert stroke --keys`）、`parts.tsv`（部件别名，俗名读音与 CNS 没有的笔画符号）。查询是「输入串 × 每种拆法」的对齐：每个部件要么吃掉它的一个读音，要么吃掉它笔顺的前几笔，于是纯读法、纯笔画、两者混着打都走同一条路；排序按「吃掉多少 → 是不是整字笔顺 → 走完没走完 → 还差几笔 → 档位 → 字频」，只吃掉不足四分之三的那种巧合匹配直接丢掉（`usangemu` 这类整句问题不该被「桑」拆出候选）。`has_match` 保留老的「部件读音连写」口径——笔画与混输不参与码点判定，否则 `uface` 就没法打码点了。
 - `wubi`：Rime 形码码表（`.dict.yaml`，极点 86 五笔）→ `词\t编码\t词频`（`wubi.rs`，`--name` 决定文件名，缺省 `table.tsv`，即形码方案目录里码表的缺省名）。单字母码保留源表顺序，其余编码按回填词频排序。
   **码表自带的权重不用**——那是码表顺序不是语料词频，用了同一个词在形码下和在拼音下会排得不一样；词频从青简词库按**词面**交叉回填，
   词库里没有的词给 `UNKNOWN_FREQUENCY = 1`。解析复用 `qingjian_dictionary::import::rime`（与用户导入 Rime 词库同一个解析器，
