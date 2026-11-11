@@ -1,7 +1,7 @@
 # Linux AppImage
 
 一个文件装下 Server、设置程序、Fcitx5 插件与产品数据，下载、加执行权限、运行一次就能用，不用编译也不用 root。
-脚本在 `apps/linux/appimage/`：`build.sh` 打包，`AppRun` 是包的入口，`test/test.sh` 在各发行版的容器里实测。用户怎么装见 [user/platforms/linux.md](../user/platforms/linux.md#AppImage)。
+脚本在 `apps/linux/appimage/`：`build.sh` 打包，`AppRun` 是包的入口，`test/test.sh` 在各发行版的容器里实测。发版时由 `release.yml` 的 `linux-appimage` job 打包并跑 Debian 13 与 Ubuntu 24.04 两项实测。用户怎么装见 [user/platforms/linux.md](../user/platforms/linux.md#AppImage)。
 
 ## 输入法为什么不能「双击就跑」
 
@@ -43,7 +43,7 @@ AppImage 的思路是程序留在包里、运行时挂载，什么都不装。�
 
 runtime 用 AppImage 官方的 type2 runtime（静态链接，宿主不用装 libfuse2），版本与 SHA256 钉在 `build.sh` 里；
 换版本时下载 `runtime-x86_64`、`.sig` 与 `signing-pubkey.asc`，`gpg --verify` 过了再改（主密钥指纹 `570C 77AC EA40 C0F1 B758 902C BF96 CCA5 6490 F695`）。
-squashfs 由 `mksquashfs`（zstd）直接打，再接在 runtime 后面，不依赖只有 continuous 版的 appimagetool。产品数据照源码安装那样经 `files.py` 按 `data.lock` 校验后放进包。
+squashfs 由 `mksquashfs`（zstd）直接打，再接在 runtime 后面，不依赖只有 continuous 版的 appimagetool。产品数据照源码安装那样经 `files.py` 按 `dicts.lock` / `models.lock` 校验后放进包。
 
 ## 实测
 

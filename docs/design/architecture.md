@@ -187,8 +187,8 @@ Engine 查词的词库是一个列表：主词库（随包 `dict.qj`）、附加
 （它们其实是通用词：医疗器械、侵权行为）；基础词库从 22 万条降到 8.7 万条、`dict.qj` 10 MB → 3 MB，领域词库合计 13 万条 7 MB。
 分词统计语料时仍把 `dicts/*.tsv` 一起当词表，词表与拆分前一致，语言模型不用重跑。
 壳负责装配，附加词库有两处：随包的领域词库在 `.app` 的 `Resources/dicts/`，缺省关闭，配置 `[dictionaries] domains` 列出打开的
-（缺省只有 `idioms`，偏好设置「词库」页可勾选、不能移除）；用户自己导入的放用户目录 `dicts/`（macOS 是 `~/Library/Application Support/Qingjian/dicts/`），
-目录里的 `.qj` / TSV 文件全部加载，配置 `[dictionaries] disabled` 列出要关掉的文件名；导入 = `qingjian_dictionary::import`
+（缺省只有 `idioms`，偏好设置「词库」页可勾选、不能移除）；用户自己导入的放用户目录 `custom/dicts/`、设置里下载的放 `downloads/dicts/`（用户目录的分类见 `qingjian_platform::UserDirs`），
+两处的 `.qj` / TSV 文件全部加载，配置 `[dictionaries] disabled` 列出要关掉的文件名；导入 = `qingjian_dictionary::import`
 把青简 TSV / Rime `.dict.yaml` / `.qj` 转成 `.qj` 放进去（Rime 的 YAML 头只取 `name:`，权重非整数当 1），
 移除 = 文件挪到 `dicts/removed/`，开关 = 改配置，三个动作之后 `Host::reload_dictionaries` 重新装配。这也是第三方词库带着自己许可证单独分发的落点：
 `.qj` 的 `META` 里有名称与许可证，偏好设置里直接显示。
@@ -219,7 +219,7 @@ CSR 偏移与后继）原样落盘，打开时 mmap 整个文件、校验一遍�
   自己写风险最小。若以后碰撞或分布出问题，换成 xxh3 并把 `FORMAT_VERSION` 加一。
 - 写文件先写同目录 `.qj.tmp` 再改名；数据文件只整体替换，从不就地修改（mmap 的安全前提）。
 - 生成：`cargo run --release -p qingjian-dict-convert -- pack dict --name … --license … --source …` → `dict.qj`，
-  `pack lm --name … --license …` → `lm.qj`（`bundle.sh` 在 TSV 比 `.qj` 新时自动重打）。`Dictionary::from_path` 按魔数自动选
+  `pack lm --name … --license …` → `lm.qj`（发在模型仓库，打包时按 `tools/release/models.lock` 取）。`Dictionary::from_path` 按魔数自动选
   `.qj` / TSV 路径，`BigramModel::from_path`（`.qj`）与 `from_paths`（TSV）分开；输入法与 CLI 有 `.qj` 就用它。
   释义表、emoji 表、英文词表还是 TSV（加载各 20 ms 以内，等有需要再进容器）。
 - 格式版本不兼容时 `FORMAT_VERSION` 加一，读旧版的代码按需保留；`Kind` 编号只增不改。
@@ -282,11 +282,11 @@ CC-CEDICT 表（`dict-convert cedict`）保留为备用来源，覆盖面广但�
   持久化在 `qingjian-learning` 的 `user-ngram.tsv`：三列 `前词\t后词\t次数` 是二元，四列 `前二词\t前词\t后词\t次数` 是三元，旧的三列文件照读。
   撤销（退格删光重选）、删词（`forget_word`）、减半都同时覆盖二元与三元。
 - **自动造词**：用户自己连着选出的两个词（不是整句路径里的），合起来不超过 4 个字、词库与用户词里都没有，
-  且这条转移已记够次数（同一段拼音里连着选的两次，分两段打的三次），就记成用户词并记一次选择。
+  且这条转移已记够次数（同一段拼音里连着选的一次，分两段打的三次），就记成用户词并记一次选择。
   同一段拼音里自选一个词之后剩下的部分走整句候选（`jidiaole` 选 挤、剩下 掉了 按空格）时，接缝处第一个词的转移按自选记双份，
   但不参与两词造词（我 + 的… 这种接缝太常见、转移计数早就够了，回放里会把 我的 造成用户词，之后它就得和 沃德 按选择次数比）。
   另外一段拼音分几次选完（`CommitChain` 记着这段里上屏的每个词）时，合起来的文本按「整段字母 → 合成词」记一次选择（`user-choices.tsv`），
-  记到两次且词库里没有、不超过 4 个字就造成用户词，下次整段打出来它靠选择次数直接排第一：这是「用户手动拼了一遍整句」最直接的信号，
+  一次选完且词库里没有、不超过 20 个字就造成用户词，下次整段打出来它靠选择次数直接排第一：这是「用户手动拼了一遍整句」最直接的信号，
   比等个人 n-gram 一份一份累到翻过静态模型快得多（「挤掉了」靠 n-gram 要选四次）。
   词级排序也用同一个语言模型：候选得分是 `log P(词 | 上一个上屏的词)`（个人 n-gram 插值，上文是链上的两个词）+ 封顶的选择次数加分，词库词频只做预选和兜底，
   所以 `ba` 在「做了」后面出 吧、句首看模型；同一输入串下选过的词（`user-choices.tsv`，键是候选覆盖的那段字母）排在得分之前，
@@ -514,7 +514,7 @@ CC-CEDICT 表（`dict-convert cedict`）保留为备用来源，覆盖面广但�
 - **交叉编译验证**：`qingjian-core` / `-dictionary` / `-format` / `-lm` / `-platform` / `apps/windows/{server,tsf}` 已能
   `cargo check --target x86_64-pc-windows-gnu` 通过（借此修掉 `qingjian-format` 里 unix 专有的 `Mmap::advise` 未 `cfg` 的移植 bug）；
   本机只 `check`，真正编译在 Windows 机器上做（`qingjian-neural` 的 candle 后端在 Windows 走 CPU，已接进 Server，见下「本地整句模型」）。
-- **本地整句模型（Server 进程，与 macOS 的 `host/model/mod.rs` 对齐）**：`server/src/dispatch/rescore/`。启动时 `find_model` 找用户 `%APPDATA%\Qingjian\models\hanzhang-tongbian\`（设置里下载的）与随包 `data\models\hanzhang-tongbian\`（安装包不带，开发时用）；选的模型没下载就不用模型，不再回退；旧用户目录 `model-p2c\` 仍可读取。接受 `.qjm` 单文件或三件套目录；`[model] enabled` 开着就起线程加载并预热（`ModelLoader`），下一次按键 / tick 接上 `set_async_sentence_scorer`。
+- **本地整句模型（Server 进程，与 macOS 的 `host/model/mod.rs` 对齐）**：`server/src/dispatch/rescore/`。启动时 `find_model` 找 `%LOCALAPPDATA%\Qingjian\downloads\models\hanzhang-tongbian\`（设置里下载的）与随包 `data\models\hanzhang-tongbian\`（安装包不带，开发时用）；选的模型没下载就不用模型，不再回退。接受 `.qjm` 单文件或三件套目录；`[model] enabled` 开着就起线程加载并预热（`ModelLoader`），下一次按键 / tick 接上 `set_async_sentence_scorer`。
   Server 没有定时器：缓冲变化后 `schedule_rescoring` 起防抖，工人循环 `recv_timeout(router.next_tick())` 按 `RescoreState` 的节拍醒来（防抖 30 ms → `request_rescoring`；后台线程交了结果经 `Engine::set_rescoring_wake` 往工人循环投 `Work::Wake` 马上收，另有 20 ms 一次的 `poll_rescoring` 兜底，最多等 2 s），DLL 组句期间每 80 ms 的 `Poll` 也顺带 `tick`。分到了重查一次、重建候选布局（云端词与整句补全留着）、由 Server 自绘的候选窗直接重画，DLL 下一次 `Poll` 拿到新帧更新内联 preedit；翻过页 / 动过高亮不动。热加载 `[model]` 变了才重载 / 卸载。
   前文：DLL 在**起组句的那次读写编辑会话**里顺手读选区起点前 64 个 UTF-16 单元（`com/edit/surrounding.rs::text_before_caret`，拼音还没插进去、不用再开一次会话），随 `ClientMessage::Surrounding` 单向送来。**密码框与私密输入**（2026-09-12 查了微软文档 / SampleIME / Chromium 源码后定）：
   TSF 规定键盘类 TIP 必须看上下文的 `GUID_COMPARTMENT_KEYBOARD_DISABLED`（微软文档明说密码框应禁用文本服务、`IS_PASSWORD` 只是标注不提供保护；Chromium 给密码框的上下文设的就是它），

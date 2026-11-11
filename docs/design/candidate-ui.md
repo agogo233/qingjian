@@ -144,7 +144,7 @@ collection behavior 是 CanJoinAllSpaces + FullScreenAuxiliary + Stationary。�
 **越用越像自己**：连续上屏的词（整句里的、或一个个选的）都记成「前词 → 后词」，同时记「前二词 前词 → 后词」；`qingjian` 里选过两次 青 + 简，
 再打 `qingjian` 整句就直接出 青简（个人转移压过静态模型里的 请见）。三元分辨二元混在一起的接续：「我想」后面选过几次 区，
 `woxiangqu` 就出 我想区，而「不想」后面照旧。标点、回车上屏拼音、切应用都断句，之后的词按句首记。
-**自动造词**：自己连着选出的两个词合起来词库里没有（不超过 4 个字），同一段拼音里连着选两次、或分两段打三次，
+**自动造词**：自己连着选出的两个词合起来词库里没有（不超过 4 个字），同一段拼音里连着选一次、或分两段打三次，
 就记成用户词（`user-words.tsv`），之后按词出、靠选择次数排前。
 
 ### 英文模式候选
@@ -391,7 +391,7 @@ Viterbi 按噪声信道挑路径：`meiganxi` 读成 没关系 只扣一次 5.5�
 学习：选了纠正后的词按原输入串记选择（`user-choices.tsv`），下次同样敲错直接首选；回车原样上屏过的串记成 `<raw>`，以后不再纠它。
 Core `correction` 模块只产生候选纠正，挑选与学习在 Engine 里。
 
-**输入日志**（`[general] input_log`，缺省开）：每次上屏往数据目录的 `input-log.jsonl` 追加一行——`keys`（消耗掉的原始键）、`pinyin`（整段切分，纠错时是纠正后的）、
+**输入日志**（`[general] input_log`，缺省开）：每次上屏往数据目录的 `records/input-log.jsonl` 追加一行——`keys`（消耗掉的原始键）、`pinyin`（整段切分，纠错时是纠正后的）、
 `corrected`、`text`、`source`（word / cloud / sentence / english / shortcut / emoji / raw / translation / cloud_sentence）、`index`（选的是查询时候选列表里第几个，
 晚到的云端词与原样上屏为空）、`top`（查询时前 5 个候选）、`scheme`、`english`、`t`（本机时间）；退格撤销另记一行 `retract`，指回被撤销那条的 `id`。
 只有敲的键与上屏的文字，不含应用里的上下文；只写本机，「高级」页可关可清，「关于」页隐私说明有写。用途：离线回放算首选命中率做排序 / 整句的回归评测，

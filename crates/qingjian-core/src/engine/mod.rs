@@ -15,6 +15,7 @@ mod composing;
 mod contacts;
 mod correcting;
 mod decoded;
+mod dictionaries;
 mod extras;
 mod follow_up;
 mod gloss;
@@ -165,7 +166,7 @@ pub struct Engine {
     /// 开着时把音标填进 `Candidate::reading`，平台层的 annotation 会画在候选词后面。
     show_english_pronunciation: bool,
 
-    /// 英文音标表（`english-ipa.tsv`），键是小写词、值是 `/ˈkɑrɡoʊ/`。没有就一律不显示音标。
+    /// 英文音标表（随包 `english-ipa.qj`），键是小写词、值是 `/ˈkɑrɡoʊ/`。没有就一律不显示音标。
     english_pronunciations: Option<WordList>,
 
     /// 有中文候选时英文最高排到第几位（配置 `[general] english_min_position`，缺省 1 即不限制）。
@@ -328,6 +329,10 @@ pub struct Engine {
 
     /// 连续上屏的链，个人 n-gram 与自动造词靠它。
     chain: CommitChain,
+    /// 是否学习连续上屏的五笔新词；不控制拼音、双拼学习或已有词的词频。
+    auto_phrase: bool,
+    /// 五笔连续组词窗口最多容纳的汉字数，范围为 2～10。
+    auto_phrase_max_chars: usize,
 
     /// 模糊音开关，缺省全关。
     fuzzy: FuzzyRules,
@@ -629,6 +634,8 @@ impl Engine {
             prediction_sequence: 0,
             pending_predictions: HashMap::new(),
             chain: CommitChain::default(),
+            auto_phrase: true,
+            auto_phrase_max_chars: 4,
             fuzzy: FuzzyRules::default(),
             shuangpin: None,
             shuangpin_raw_preedit: false,
